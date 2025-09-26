@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 async function loadHymns() {
   const res = await fetch("/ccc_hymns_full.json");
@@ -8,12 +8,12 @@ async function loadHymns() {
 
 export default function Display() {
   const [hymn, setHymn] = useState<any>(null);
+  const [slide, setSlide] = useState(0);
   const [theme, setTheme] = useState("celestial");
   const [view, setView] = useState("both");
   const [fontSize, setFontSize] = useState("xl");
   const [align, setAlign] = useState("center");
   const [bgImage, setBgImage] = useState("");
-  const [slide, setSlide] = useState(0);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -27,8 +27,8 @@ export default function Display() {
 
     if (number) {
       loadHymns().then((all: any[]) => {
-        const match = all.find((h: any) => h.number === number);
-        setHymn(match);
+        const match = all.find((h) => Number(h.number) === number);
+        setHymn(match || null);
       });
     }
   }, []);
@@ -50,7 +50,7 @@ export default function Display() {
     justify: "text-justify",
   };
 
-  // Break hymn into slides (Yoruba + English grouped by lines)
+  // convert hymn lines to slides (one line per slide)
   const slides: { yoruba?: string; english?: string }[] = [];
   const maxLines = Math.max(hymn.yoruba?.length || 0, hymn.english?.length || 0);
   for (let i = 0; i < maxLines; i++) {
@@ -59,33 +59,32 @@ export default function Display() {
       english: hymn.english?.[i],
     });
   }
-
   const current = slides[slide] || {};
 
   return (
     <div
-      className={`flex flex-col justify-center items-center h-screen p-8 transition-opacity duration-700 opacity-100 ${themes[theme]}`}
+      className={`flex flex-col justify-center items-center h-screen p-8 ${themes[theme]}`}
       style={{
         backgroundImage: bgImage ? `url(${bgImage})` : undefined,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
-      <h1 className="text-3xl font-bold mb-4 bg-black/40 px-4 py-2 rounded">
-        Hymn {hymn.number}
-      </h1>
+      <h1 className="text-3xl font-bold mb-4 bg-black/40 px-4 py-2 rounded">Hymn {hymn.number}</h1>
 
       {view === "both" && (
         <div className={`grid grid-cols-2 gap-8 w-full ${alignment[align]} text-${fontSize}`}>
-          <div>{current.yoruba}</div>
-          <div>{current.english}</div>
+          <div className="px-4 py-2">{current.yoruba || ""}</div>
+          <div className="px-4 py-2">{current.english || ""}</div>
         </div>
       )}
+
       {view === "yoruba" && (
-        <div className={`w-full ${alignment[align]} text-${fontSize}`}>{current.yoruba}</div>
+        <div className={`w-full ${alignment[align]} text-${fontSize} px-4 py-2`}>{current.yoruba || ""}</div>
       )}
+
       {view === "english" && (
-        <div className={`w-full ${alignment[align]} text-${fontSize}`}>{current.english}</div>
+        <div className={`w-full ${alignment[align]} text-${fontSize} px-4 py-2`}>{current.english || ""}</div>
       )}
     </div>
   );
